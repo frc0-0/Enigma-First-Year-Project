@@ -111,13 +111,21 @@ class enigma:
             letter = ati(l)
 
             #Rotate rotor
-            for k in range(self.rotorQuantity):
-                rot = self.rotorBuffer[self.rotorQuantity-1-k]
-                if rot.notchPosition != rot.rotorPosition:
-                    rot.rotate()
-                    break
-                else:
-                    rot.rotate()
+            hasRotated = False # if rotNext has rotated.
+            for k in range(self.rotorQuantity-1):
+
+                if hasRotated == True:
+                    hasRotated = False
+                    continue
+
+                rotCurrent = self.rotorBuffer[k]
+                rotNext = self.rotorBuffer[k+1]
+                if rotNext.notchPosition == rotNext.rotorPosition:
+                    rotCurrent.rotate()
+                    rotNext.rotate()
+                    hasRotated = True
+            if hasRotated == False:
+                self.rotorBuffer[self.rotorQuantity-1].rotate()
 
             #Plugboard
             letter = self.plugboard.connection[letter]
