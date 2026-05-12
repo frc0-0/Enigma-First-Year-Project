@@ -1,39 +1,38 @@
-import enigma as e
+import Enigma as e
 
-message = "Secretmessage"
+message = "SecretMessage"
 
-machine = e.enigma([2,4,3], "B")
+machine = e.enigma([2,4,3], ["C", "E", "Y"], ["D", "S", "T"])
 
-#Encryption
-machine.rotorBuffer[0].ringPosition = e.ati("C")
-machine.rotorBuffer[0].rotorPosition = e.ati("D")
-
-machine.rotorBuffer[1].ringPosition = e.ati("E")
-machine.rotorBuffer[1].rotorPosition = e.ati("S")
-
-machine.rotorBuffer[2].ringPosition = e.ati("Y")
-machine.rotorBuffer[2].rotorPosition = e.ati("T")
-
-machine.plugboard.add(e.ati("S"), e.ati("G"))
-machine.plugboard.add(e.ati("F"), e.ati("X"))
-machine.plugboard.add(e.ati("H"), e.ati("B"))
-machine.plugboard.add(e.ati("K"), e.ati("M"))
-machine.plugboard.add(e.ati("Q"), e.ati("L"))
-machine.plugboard.add(e.ati("R"), e.ati("U"))
-
-enctyptedMessage = machine.op(message)
-print(enctyptedMessage)
+machine.plugboard.add("S", "G")
+machine.plugboard.add("F", "X")
+machine.plugboard.add("H", "B")
+machine.plugboard.add("K", "M")
+machine.plugboard.add("Q", "L")
+machine.plugboard.add("R", "U")
+machine.plugboard.add("Z", "Y")
+machine.plugboard.add("T", "P")
+machine.plugboard.add("C", "D")
+machine.plugboard.add("A", "I")
 
 
-#Decryption
-machine.rotorBuffer[0].ringPosition = e.ati("C")
-machine.rotorBuffer[0].rotorPosition = e.ati("D")
+encryptedMessage = machine.op(message)
 
-machine.rotorBuffer[1].ringPosition = e.ati("E")
-machine.rotorBuffer[1].rotorPosition = e.ati("S")
+machine = e.enigma([2,4,3], ["C", "E", "Y"], ["D", "S", "T"])
 
-machine.rotorBuffer[2].ringPosition = e.ati("Y")
-machine.rotorBuffer[2].rotorPosition = e.ati("T")
+machine.plugboard.add("S", "G")
+machine.plugboard.add("F", "X")
+machine.plugboard.add("H", "B")
+machine.plugboard.add("K", "M")
+machine.plugboard.add("Q", "L")
+machine.plugboard.add("R", "U")
+machine.plugboard.add("Z", "Y")
+machine.plugboard.add("T", "P")
+machine.plugboard.add("C", "D")
+machine.plugboard.add("A", "I")
 
-decryptedMessage = machine.op(enctyptedMessage)
-print(decryptedMessage)
+decryptedMessage = machine.op(encryptedMessage)
+
+print("Encrypted text:", encryptedMessage)
+print()
+print("Decrypted text:", decryptedMessage)
