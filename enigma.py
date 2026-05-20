@@ -24,6 +24,9 @@ class rotor:
         self.permutationEnter = [] #This is the permutation used when coming from the ETW(input wheel).
         self.permutationExit = [] #This is the permutation used after reflecting.
 
+        self.setPermutation(historicRotorType)
+
+    def setPermutation(self, historicRotorType):
         if historicRotorType == 1:
             self.notchPosition = ati("Q")
             self.permutationEnter = [4, 10, 12, 5, 11, 6, 3, 16, 21, 25, 13, 19, 14, 22, 24, 7, 23, 20, 18, 15, 0, 8, 1, 17, 2, 9]
@@ -45,8 +48,9 @@ class rotor:
             self.permutationEnter = [21, 25, 1, 17, 6, 8, 19, 24, 20, 15, 18, 3, 13, 7, 11, 23, 0, 22, 12, 9, 16, 14, 5, 4, 2, 10]
             self.permutationExit = [16, 2, 24, 11, 23, 22, 4, 13, 5, 19, 25, 14, 18, 12, 21, 9, 20, 3, 10, 6, 8, 0, 17, 15, 7, 1]
 
-    def rotate(self):
-        self.rotorPosition = (self.rotorPosition+1)%26
+
+    def rotate(self,num):
+        self.rotorPosition = (self.rotorPosition+num)%26
 
 class plugboard:
     # To connect two letters, call the function add, passing both letters as numbers. To remove this connection, call remove with one of these letters.
@@ -70,6 +74,7 @@ class enigma:
     # rotorType should be a list of the rotors, from left to right. The rightmost will be connected to the ETW.
     def __init__(self, rotorTypes, rotorRings, rotorPositions):
         self.rotorBuffer = []
+        self.tempRotorPos = [0,0,0]
         self.reflector = [24, 17, 20, 7, 16, 18, 11, 3, 15, 23, 13, 6, 14, 10, 12, 8, 4, 1, 5, 25, 2, 22, 21, 9, 0, 19]
         self.plugboard = plugboard()
 
@@ -78,15 +83,9 @@ class enigma:
             self.rotorBuffer[i].ringPosition = ati([rotorRings, rotorPositions][0][i])
             self.rotorBuffer[i].rotorPosition = ati([rotorRings, rotorPositions][1][i])
 
-    def op(self, text):
-        newText = []
-
-        for i in text:
-            letter = ati(i)
-
-            #Rotate rotor
+    def rotate(self, num):
+        for i in range(num):
             hasRotated = False # if rotNext has rotated.
-
             for k in range(2):
                 if hasRotated is True:
                     hasRotated = False
@@ -96,12 +95,36 @@ class enigma:
                 rotNext = self.rotorBuffer[k+1]
 
                 if rotNext.notchPosition == rotNext.rotorPosition:
-                    rotCurrent.rotate()  
-                    rotNext.rotate()
+                    rotCurrent.rotate(1)  
+                    rotNext.rotate(1)
                     hasRotated = True
 
             if hasRotated is False:
-                self.rotorBuffer[2].rotate()
+                self.rotorBuffer[2].rotate(1)
+
+
+    #resetPos = True means that the enigma returns to the settings used.
+    #ignoreNotch = True means that only the right rotor rotates, ignoring notches.
+    def op(self, text, start, end, resetPos=False, ignoreNotch=False):
+        
+        if resetPos == True:
+            for rotor in range(3):
+                self.tempRotorPos[rotor] = self.rotorBuffer[rotor].rotorPosition
+
+        newText = []
+        if start>=0:
+            slicedText = text[start:end]
+        else:
+            slicedText = text
+
+        for i in slicedText:
+            letter = ati(i)
+
+            #Rotate rotor
+            if ignoreNotch == False:
+                self.rotate(1)
+            else:
+                self.rotorBuffer[2].rotate(1);
 
             #Plugboard
             letter = self.plugboard.connection[letter]
@@ -124,5 +147,10 @@ class enigma:
             #Plugboard
             letter = self.plugboard.connection[letter]
             newText.append(ita(letter))
+
+
+        if resetPos == True:
+            for rotor in range(3):
+                 self.rotorBuffer[rotor].rotorPosition = self.tempRotorPos[rotor]
 
         return "".join(newText)
