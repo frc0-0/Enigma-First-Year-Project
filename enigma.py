@@ -72,16 +72,22 @@ class plugboard:
 
 class enigma:
     # rotorType should be a list of the rotors, from left to right. The rightmost will be connected to the ETW.
-    def __init__(self, rotorTypes, rotorRings, rotorPositions):
+    def __init__(self, rotorTypes, rotorRings, rotorPositions, inputNum=False):
         self.rotorBuffer = []
         self.tempRotorPos = [0,0,0]
         self.reflector = [24, 17, 20, 7, 16, 18, 11, 3, 15, 23, 13, 6, 14, 10, 12, 8, 4, 1, 5, 25, 2, 22, 21, 9, 0, 19]
         self.plugboard = plugboard()
-
-        for i in range(3):
-            self.rotorBuffer.append(rotor(rotorTypes[i]))
-            self.rotorBuffer[i].ringPosition = ati([rotorRings, rotorPositions][0][i])
-            self.rotorBuffer[i].rotorPosition = ati([rotorRings, rotorPositions][1][i])
+        
+        if inputNum == True:
+            for i in range(3):
+                self.rotorBuffer.append(rotor(rotorTypes[i]))
+                self.rotorBuffer[i].ringPosition = ([rotorRings, rotorPositions][0][i])
+                self.rotorBuffer[i].rotorPosition = ([rotorRings, rotorPositions][1][i])
+        else:
+            for i in range(3):
+                self.rotorBuffer.append(rotor(rotorTypes[i]))
+                self.rotorBuffer[i].ringPosition = ati([rotorRings, rotorPositions][0][i])
+                self.rotorBuffer[i].rotorPosition = ati([rotorRings, rotorPositions][1][i])
 
     def rotate(self, num):
         for i in range(num):

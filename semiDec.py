@@ -1,12 +1,58 @@
 import enigma as e
 from itertools import permutations
-cipher = "EKZUZCNOBOZOXLJISABTFAKTBMDEFLDQAFKZALTOPDFSDSWXYBNWPRQCXCNDWFUXMLCZDRPDDMXZQBEZPIUIUDVUXCSODUKOYMLHVGOXOFCZ"
-print(len(cipher))
-cribWord="ENGLISH"
+
+cipher = "ESXOQJRWNDOGCQFPLTILCTCAJWSKVROOHHDFPKQPLWXPTFWAKLZJPUCFLCQRCCDTHXVHOISBLOTBAGEXXESPLFVCOQDCBYTKKXBZWADAUYHNEVZYSVPAVWZBNZUHVUTSBODDEYDSCVTKJHDJDCVURNXGODJQOHAUBWRQWWWZAUACDIGMVD"
+cribWord="REGULATION"
 cribLen = len(cribWord)
 
-# This part finds possible parts of cipher that decrypt to cribword, and stores them in cribCorr
-def findCorr():
+possibleInitialSettings = []
+
+def getInitialSettings(corr, order, rp):
+    # Index of the first letter of corr
+    index = -1
+    for i in range(len(cipher)-len(cribWord)):
+        index = i
+        for j in range(len(cribWord)):
+            if cipher[i+j] != corr[j]:
+                index = -1
+                break
+        if index != -1:
+            break
+
+    window = [0,0,0]
+    ring   = [0,0,0]
+    window[2] = (rp[2] - index) % 26 #There is one rotation of the right rotor each time.
+
+    # The right rotor goes over its notch at most (index//26)+1 times
+    # The middle rotor goes over its notch at most (index//26*26)+1 times
+    # So the initial position could be from rp[1] to rp[1]-2-(index//26)-(index//26*26)
+
+    #Meanwhile, the left rotor could have rotated at most (index//26*26)+1
+    # So the initial position could be from rp[0] to rp[0]-1-(index//26*26)
+    machine = e.enigma(order, ["A","A","A"], ["A","A","A"])
+    for i in range(26**2):
+        ring = [0, (i//26)%26, i%26]
+
+        for r in range(3):
+            machine.rotorBuffer[r].ringPosition = ring[r]
+
+        for leftPos in range(rp[0]-1-(index//(26*26)), rp[0]+1):
+            for middlePos in range(rp[1]-2-(index//26)-(index//(26*26)), rp[1]+1):
+                 
+                machine.rotorBuffer[0].rotorPosition = (ring[0] + leftPos)%26
+                machine.rotorBuffer[1].rotorPosition = (ring[1] + middlePos)%26
+                machine.rotorBuffer[2].rotorPosition = (ring[2] + window[2])%26 
+
+                machine.rotate(index)
+                dec = machine.op(corr, -1, -1)
+                if dec == cribWord:
+                    window[0] = (ring[0] + leftPos)%26
+                    window[1] = (ring[1] + middlePos)%26
+                    possibleInitialSettings.append([order,ring,[window[0],window[1],(ring[2] + window[2])%26]])
+                # Check if its the same as the settings we recieved.
+
+
+def decrypt():
     cribCorr = []
     foundPossible = True
     for start in range(len(cipher)-len(cribWord)):
@@ -18,9 +64,11 @@ def findCorr():
             cribCorr.append(cipher[start:start+len(cribWord)])
         else:
             foundPossible = True
-    return cribCorr
 
-def decrypt(cribCorr):
+    corrSol = ""
+    windowSol = [0,0,0]
+    orderSol = [0,0,0]
+
     machine = e.enigma([1,2,3],["A","A","A"],["A","A","A"])
     corrIndex = 1 #Keep track of progress. Not necessary 
     permIndex = 1 #Keep track of progress. Not necessary
@@ -29,6 +77,7 @@ def decrypt(cribCorr):
         print("PERMUTATION", permIndex,",", order)
         permIndex += 1
         index = 1
+
         for corr in cribCorr:
             print(index,"out of",len(cribCorr))
             index += 1
@@ -52,7 +101,8 @@ def decrypt(cribCorr):
                 
                 #Case1: NULL(no middle,no left rotation)
                 if differenceIndex == -1:
-                    print("Match found!\nCipher:",corr," Window:",rp)
+                    print("Match found!")
+                    getInitialSettings(corr,order,rp)
                     done = True
                     break
 
@@ -68,7 +118,8 @@ def decrypt(cribCorr):
                         differenceIndex2 = l
                         break
                 if differenceIndex2 == -1:
-                    print("Match found!\nCipher:",corr," Window:",rp)
+                    print("Match found!")
+                    getInitialSettings(corr,order,rp)
                     done = True
                     break
                 elif differenceIndex2 == 1: #If differenceIndex2=0, then m at the beginning must be wrong, otherwise we should get at least one correct letter. Recall that it has to be 1, since m lm are right next to each other.
@@ -84,7 +135,8 @@ def decrypt(cribCorr):
                             differenceIndex3 = l
                             break
                     if differenceIndex3 == -1:
-                        print("Match found!\nCipher:",corr," Window:",rp)
+                        print("Match found!")
+                        getInitialSettings(corr,order,rp)
                         done = True
                         break
 
@@ -102,7 +154,8 @@ def decrypt(cribCorr):
                         differenceIndex4 = l
                         break
                 if differenceIndex4 == -1:
-                    print("Match found!\nCipher:",corr," Window:",rp)
+                    print("Match found!")
+                    getInitialSettings(corr,order,rp)
                     done = True
                     break
                 elif differenceIndex4>0:#Maybe there is an m after lm
@@ -110,20 +163,26 @@ def decrypt(cribCorr):
                     machine.rotorBuffer[2].rotate(differenceIndex4)
                     dec = machine.op(corr,differenceIndex4,cribLen,True,True)
                     differenceIndex5 = -1
-                    for l in range(cribLen):
-                        if cribWord[l] != dec[l]:
+                    for l in range(cribLen-differenceIndex4):
+                        if cribWord[l+differenceIndex4] != dec[l]:
                             differenceIndex5 = l
                             break
                     if differenceIndex5 == -1:
-                        print("Match found!\nCipher:",corr," Window:",rp)
+                        print("Match found!")
+                        getInitialSettings(corr,order,rp)
                         done = True
                         break
             if done == True:
                 break;
         if done == True:
             break;
+
+
 def main():
-    cribCorr = findCorr()
-    decrypt(cribCorr)
-    
+    decrypt()
+    print(len(possibleInitialSettings))
+    for i in possibleInitialSettings:
+        print("Current settings: ", i)
+        machine = e.enigma(i[0],i[1],i[2],True)
+        print(machine.op(cipher,-1,-1))
 main()
