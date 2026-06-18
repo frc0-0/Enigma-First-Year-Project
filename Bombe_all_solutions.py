@@ -1,4 +1,4 @@
-#This is bombe simulator which gives all possibly correct rotor configuration
+#This is bombe simulator which gives all possibly correct rotor configuration with one plugboard for each.
 
 #Gives all required libraries
 import Enigma as e
@@ -53,7 +53,7 @@ def check_order(orders):
         for a  in range(26**3):
             if a / 26**3 > p+0.01:
                 p = a / 26**3
-                print(crib_index, p*100)
+                print(p*100)
 
             #Chooses offsets itself.
             offset_right = a % 26
@@ -90,26 +90,35 @@ def check_order(orders):
                     for first_plug in l1:
                         decryption_test = "A"
 
+                        #This is dictionary for logical propagations and assumptions.
                         plugboard_pairs = {}
 
+                        #This is for assumption that letters are connected.
                         if first_crib_letter != first_plug:
                             plug_number = 1
                             plugboard_pairs[first_crib_letter] = first_plug
                             plugboard_pairs[first_plug] = first_crib_letter
 
+                        #THis is for  assumption that no letters are connected.
                         else:
                             plug_number = 0
                             plugboard_pairs[first_crib_letter] = first_plug
 
+                        #This adds assumption connection to disctionary.
                         plugboard_variants.append((plugboard_pairs, plug_number))
 
+                        #This runs until solution is found or all assumptions are rejected.
                         while len(plugboard_variants) > 0:
 
+                            #This removes assumption.
                             plugboard_pairs, plug_number = plugboard_variants.pop()
 
+                            #These are indexes to check contradiction and added consequences of propagation.
                             impossible = 0
                             added = 1
 
+                            #This checks for consequences of assumption until its not rejected or solution is found.
+                            #It also stops if propagation gives no connections anymore.
                             while impossible == 0 and added == 1 and plug_number < 7:
 
 
@@ -122,6 +131,7 @@ def check_order(orders):
                                 machine.rotorBuffer[1].ringPosition = rings[1]
                                 machine.rotorBuffer[2].ringPosition = rings[2]
 
+                                #This runs consequences for menu.
                                 for d in range(crib_length):
 
                                     crib_letter = crib[d]
@@ -172,17 +182,19 @@ def check_order(orders):
 
                                             impossible = 1
 
+                                    #Enigma must make step if nothing was obtained for next letter.
                                     else:
                                         machine.rotate(1)
 
+                                    #This checks if contradiction was found.
                                     if impossible == 1 or plug_number > 6:
                                         break
 
-
+                            #If there was contradiction, it is rejected.
                             if impossible == 1 or plug_number > 6:
                                 continue
 
-
+                            #Checks obtained 6 plugs for correct solution.
                             if plug_number == 6:
 
                                 machine.rotorBuffer[0].rotorPosition = window[0]
@@ -215,6 +227,7 @@ def check_order(orders):
     
                             letter_assumed = "NO"
 
+                            #Checks if observed assumption was already made.
                             for assumption in l1:
 
                                 if assumption not in plugboard_pairs:
@@ -226,6 +239,7 @@ def check_order(orders):
                             if letter_assumed == "NO":
                                 continue
     
+                            #Makes new assumption by checking whole dictionary.
                             for assumption in l1:
         
                                 if assumption in plugboard_pairs:
@@ -245,6 +259,7 @@ def check_order(orders):
 
                                     plugboard_variants.append((plugboard_pairs_expanded, plug_number))
 
+                        #Checks if solution was obtained.
                         if crib == decryption_test:
                                 break
                         
